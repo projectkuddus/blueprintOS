@@ -118,10 +118,10 @@ const ProjectFiles: React.FC<ProjectFilesProps> = ({ project, onPreview }) => {
           </div>
           
           <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-2 md:pb-0 no-scrollbar">
-            {(['all', 'cad', '3d', 'pdf', 'image', 'document'] as const).map(type => (
+            {['all', 'cad', '3d', 'pdf', 'image', 'document'].map(type => (
                <button
                  key={type}
-                 onClick={() => setActiveFilter(type as AssetType | 'all')}
+                 onClick={() => setActiveFilter(type as any)}
                  className={`px-4 py-2 text-xs font-bold uppercase border transition-all whitespace-nowrap ${
                     activeFilter === type 
                       ? 'bg-black text-white border-black' 

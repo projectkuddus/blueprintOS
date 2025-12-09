@@ -11,82 +11,43 @@
         theme: {
           extend: {
             colors: {
-              completed: '#16a34a', // Green for completed steps
-              active: '#0f172a',    // Black/Slate-900 for active
-              blueprint: {
-                50: '#f8fafc',
-                100: '#f1f5f9',
-                200: '#e2e8f0',
-                300: '#cbd5e1',
-                400: '#94a3b8',
-                500: '#64748b',
-                600: '#475569',
-                700: '#334155',
-                800: '#1e293b',
-                900: '#0f172a',
-                950: '#020617',
-              },
+              completed: '#10b981', 
+              active: '#1e293b',
             },
             fontFamily: {
-              sans: ['Inter', 'sans-serif'],
-              serif: ['Playfair Display', 'serif'],
+              sans: ['Space Grotesk', 'sans-serif'],
+              display: ['Space Grotesk', 'sans-serif'],
+              body: ['Space Grotesk', 'sans-serif'],
             },
-            animation: {
-              'float': 'float 6s ease-in-out infinite',
-              'draw': 'draw 2s ease-out forwards',
-            },
-            keyframes: {
-              float: {
-                '0%, 100%': { transform: 'translateY(0)' },
-                '50%': { transform: 'translateY(-20px)' },
-              },
-              draw: {
-                '0%': { strokeDasharray: '1000', strokeDashoffset: '1000' },
-                '100%': { strokeDasharray: '1000', strokeDashoffset: '0' },
-              }
-            }
           }
         }
       }
     </script>
     <style>
+      @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+
       body {
-        font-family: 'Inter', sans-serif;
-        background-color: #ffffff;
-        color: #0f172a;
+        font-family: 'Space Grotesk', sans-serif;
+        background-color: #f8fafc;
+        color: #1e293b;
         margin: 0;
         overflow-x: hidden;
       }
-      
-      /* Paper Texture Noise */
-      .bg-paper {
-        background-color: #ffffff;
-        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
-      }
 
-      /* Glassmorphism Utilities */
-      .glass-panel {
-        background: rgba(255, 255, 255, 0.2);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.5);
-        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.05);
-      }
-
-      /* Custom scrollbar for aesthetic */
+      /* Custom scrollbar */
       ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
+        width: 6px;
+        height: 6px;
       }
       ::-webkit-scrollbar-track {
-        background: #f1f5f9;
+        background: transparent;
       }
       ::-webkit-scrollbar-thumb {
-        background: #e2e8f0;
-        border-radius: 4px;
+        background: rgba(148, 163, 184, 0.5);
+        border-radius: 10px;
       }
       ::-webkit-scrollbar-thumb:hover {
-        background: #cbd5e1;
+        background: rgba(100, 116, 139, 0.8);
       }
     </style>
   <script type="importmap">

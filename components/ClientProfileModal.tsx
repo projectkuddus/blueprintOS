@@ -83,8 +83,8 @@ const ClientProfileModal: React.FC<ClientProfileModalProps> = ({ isOpen, onClose
           date: newTransaction.date || new Date().toISOString(),
           amount: Number(newTransaction.amount),
           description: newTransaction.description || 'Transaction',
-          type: newTransaction.type as any,
-          status: newTransaction.status as any,
+          type: newTransaction.type,
+          status: newTransaction.status,
           reference: newTransaction.reference
       };
 
@@ -290,7 +290,7 @@ const ClientProfileModal: React.FC<ClientProfileModalProps> = ({ isOpen, onClose
                                     <select 
                                         className="w-full p-2 border text-xs"
                                         value={newTransaction.type}
-                                        onChange={e => setNewTransaction({...newTransaction, type: e.target.value as any})}
+                                        onChange={e => setNewTransaction({...newTransaction, type: e.target.value as 'invoice' | 'payment'})}
                                     >
                                         <option value="invoice">Invoice</option>
                                         <option value="payment">Payment</option>

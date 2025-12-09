@@ -1,5 +1,4 @@
 
-
 import React from 'react';
 import { Project } from '../types';
 import { MapPin, Calendar, DollarSign, ArrowRight, Lock, Building, Users } from 'lucide-react';
@@ -13,7 +12,6 @@ interface ProjectCardProps {
 const ProjectCard: React.FC<ProjectCardProps> = ({ project, canViewFinancials, onClick }) => {
   const currentStageName = project.stages.find(s => s.id === project.currentStageId)?.name || 'Unknown Stage';
   const stageIndex = project.stages.findIndex(s => s.id === project.currentStageId);
-  // Calculate percentage, ensure valid number
   const totalStages = project.stages.length || 1;
   const progressPercent = Math.round(((stageIndex + 1) / totalStages) * 100);
 
@@ -27,98 +25,102 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, canViewFinancials, o
   return (
     <div 
       onClick={() => onClick(project)}
-      className="group bg-white border border-slate-200 hover:border-black transition-all duration-300 overflow-hidden cursor-pointer flex flex-col h-full shadow-sm hover:shadow-md relative"
+      className="group bg-white rounded border border-slate-200 overflow-hidden cursor-pointer flex flex-col h-full transition-all duration-300 hover:shadow-md hover:border-slate-400 relative"
     >
-      <div className="relative h-56 overflow-hidden">
+      <div className="relative h-36 overflow-hidden bg-slate-100 border-b border-slate-100">
         <img 
           src={project.thumbnailUrl} 
           alt={project.name} 
-          className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700"
+          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 grayscale group-hover:grayscale-0"
         />
-        <div className="absolute top-0 left-0 w-full p-4 flex justify-between items-start bg-gradient-to-b from-black/60 to-transparent">
-             <div className="bg-white/90 backdrop-blur-md px-3 py-1 text-xs font-bold text-black uppercase tracking-wider shadow-sm">
+        
+        {/* Status Pill */}
+        <div className="absolute top-2 left-2">
+             <div className="bg-white/95 px-2 py-1 text-[9px] font-bold text-slate-900 uppercase tracking-wider shadow-sm flex items-center gap-1.5 border border-slate-100 rounded-sm">
+                <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse"></span>
                 {currentStageName}
              </div>
         </div>
 
         {/* Categories Overlay */}
-        <div className="absolute bottom-3 left-4 flex gap-2">
-            <span className="bg-black/80 text-white px-2 py-0.5 text-[10px] font-bold uppercase backdrop-blur-sm flex items-center gap-1">
-                <Building size={10} /> {project.type}
+        <div className="absolute bottom-2 left-2 flex gap-1">
+            <span className="bg-slate-900 text-white px-1.5 py-0.5 text-[9px] font-bold uppercase flex items-center gap-1 shadow-sm rounded-sm">
+                <Building size={8} /> {project.type}
             </span>
-            <span className="bg-white/90 text-black px-2 py-0.5 text-[10px] font-bold uppercase backdrop-blur-sm flex items-center gap-1">
-                <Users size={10} /> {project.classification}
+            <span className="bg-white text-slate-800 px-1.5 py-0.5 text-[9px] font-bold uppercase flex items-center gap-1 shadow-sm rounded-sm border border-slate-200">
+                <Users size={8} /> {project.classification}
             </span>
         </div>
       </div>
       
-      <div className="p-6 flex-1 flex flex-col bg-white">
-        <div className="flex justify-between items-start mb-4">
-          <h3 className="font-bold text-xl text-black group-hover:underline decoration-1 underline-offset-4 leading-tight">
+      <div className="p-4 flex-1 flex flex-col relative">
+        <div className="flex justify-between items-start mb-3">
+          <h3 className="font-display font-bold text-base text-slate-900 leading-tight group-hover:text-black transition-colors uppercase truncate w-full">
             {project.name}
           </h3>
         </div>
         
-        <div className="space-y-3 text-sm text-slate-600 mb-8 flex-1">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-                <MapPin size={16} className="text-slate-400" />
-                {project.location}
+        <div className="space-y-2 text-xs text-slate-600 mb-4 flex-1">
+          <div className="flex items-center justify-between p-1.5 rounded-sm bg-slate-50 border border-slate-100">
+            <div className="flex items-center gap-2 max-w-[80%]">
+                <MapPin size={12} className="text-slate-400 shrink-0"/>
+                <span className="text-[10px] font-medium truncate uppercase">{project.location}</span>
             </div>
             {project.googleMapLink && (
                 <button 
                     onClick={handleMapClick}
-                    className="p-1 hover:bg-zinc-100 rounded-full text-emerald-600 transition-colors"
-                    title="View on Map"
+                    className="p-0.5 hover:bg-white rounded-full text-slate-400 hover:text-black transition-colors"
                 >
-                    <MapPin size={14} className="fill-current" />
+                    <ArrowRight size={10} className="-rotate-45" />
                 </button>
             )}
           </div>
-          <div className="flex items-center gap-3">
-             <DollarSign size={16} className="text-slate-400" />
-             <span className="flex items-center gap-2">
+
+          <div className="flex items-center gap-2 px-1">
+             <DollarSign size={12} className="text-slate-400" />
+             <span className="flex items-center gap-1 text-[10px] font-medium uppercase">
                Budget: 
                {canViewFinancials ? (
-                 <span className="font-mono font-bold">${project.budget.toLocaleString()}</span>
+                 <span className="font-mono font-bold text-slate-900">${project.budget.toLocaleString()}</span>
                ) : (
-                 <span className="flex items-center text-slate-300 bg-slate-100 px-1 rounded-sm">
-                   <Lock size={10} className="mr-1"/> HIDDEN
+                 <span className="flex items-center text-slate-400 bg-slate-100 px-1 py-0.5 rounded-sm text-[9px]">
+                   <Lock size={8} className="mr-1"/> HIDDEN
                  </span>
                )}
              </span>
           </div>
-          <div className="flex items-center gap-3">
-             <Calendar size={16} className="text-slate-400" />
-             Client: {project.clientName}
+          
+          <div className="flex items-center gap-2 px-1">
+             <Calendar size={12} className="text-slate-400" />
+             <span className="text-[10px] font-medium uppercase truncate">Client: {project.clientName}</span>
           </div>
         </div>
 
-        <div className="flex items-center justify-between pt-5 border-t border-slate-100">
-           <div className="flex -space-x-2">
-             {/* Mock avatars */}
+        {/* Footer with Team & Action */}
+        <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+           <div className="flex -space-x-1.5 pl-1">
              {Object.entries(project.team).slice(0, 3).map(([role, name], i) => (
-                <div key={i} title={`${name} (${role})`} className="w-8 h-8 rounded-full bg-zinc-100 border-2 border-white flex items-center justify-center text-[10px] font-bold text-slate-600 uppercase">
+                <div key={i} title={`${name} (${role})`} className="w-6 h-6 rounded-full bg-white border border-slate-200 flex items-center justify-center text-[8px] font-bold text-slate-600 uppercase">
                   {typeof name === 'string' ? name.substring(0, 2) : '??'}
                 </div>
              ))}
              {Object.keys(project.team).length > 3 && (
-               <div className="w-8 h-8 rounded-full bg-black border-2 border-white flex items-center justify-center text-[10px] font-bold text-white">
+               <div className="w-6 h-6 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center text-[8px] font-bold text-slate-500">
                  +{Object.keys(project.team).length - 3}
                </div>
              )}
            </div>
            
-           <span className="flex items-center gap-1 text-xs font-bold text-black uppercase tracking-wider group-hover:translate-x-1 transition-transform">
-             Details <ArrowRight size={14} />
-           </span>
+           <button className="w-6 h-6 rounded-full border border-slate-200 bg-white flex items-center justify-center text-slate-900 hover:bg-black hover:text-white transition-all duration-300">
+             <ArrowRight size={12} />
+           </button>
         </div>
       </div>
 
-      {/* Progress Bar at Bottom of Card */}
-      <div className="w-full bg-zinc-100 h-1.5">
+      {/* Progress Bar */}
+      <div className="absolute bottom-0 left-0 w-full h-0.5 bg-slate-100">
           <div 
-            className="h-full bg-emerald-500 transition-all duration-700 ease-out" 
+            className="h-full bg-emerald-500" 
             style={{ width: `${progressPercent}%` }}
           />
       </div>

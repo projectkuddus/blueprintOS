@@ -35,6 +35,7 @@ import AddProjectMemberModal from './components/AddProjectMemberModal';
 import UserProfileModal from './components/UserProfileModal';
 import AIAssistant from './components/AIAssistant';
 import PublicProjectView from './components/PublicProjectView';
+import ClientPaymentPortal from './components/ClientPaymentPortal';
 import { 
   CreditCard, 
   UserPlus, 
@@ -62,7 +63,14 @@ import {
   Filter, 
   Plus, 
   Mail, 
-  Send 
+  Send,
+  ChevronDown,
+  ChevronUp,
+  AlertOctagon,
+  PieChart,
+  DollarSign,
+  Clock,
+  Eye
 } from 'lucide-react';
 import { 
   ResponsiveContainer, 
@@ -80,7 +88,7 @@ const App: React.FC = () => {
   const [isCoreAccount, setIsCoreAccount] = useState<boolean>(true); 
   const [currentView, setCurrentView] = useState('dashboard');
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const [projectDetailView, setProjectDetailView] = useState<'workflow' | 'hierarchy' | 'files'>('workflow');
+  const [projectDetailView, setProjectDetailView] = useState<'workflow' | 'hierarchy' | 'files' | 'client-portal'>('workflow');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<ProjectType | 'All'>('All');
   const [filterClassification, setFilterClassification] = useState<ProjectClassification | 'All'>('All');
@@ -104,6 +112,9 @@ const App: React.FC = () => {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const docInputRef = useRef<HTMLInputElement>(null);
   const [isUploadingDoc, setIsUploadingDoc] = useState(false);
+  
+  // Financial Dashboard State
+  const [expandedFinProject, setExpandedFinProject] = useState<string | null>(null);
 
   const PRICE_PER_SEAT = 1000;
   const USED_SEATS = teamMembers.filter(m => m.status === 'active' || m.status === 'pending').length;
@@ -169,6 +180,17 @@ const App: React.FC = () => {
     checkDeadlines();
   }, [allProjects]);
 
+  // Handle Role Change Side Effects
+  useEffect(() => {
+    // If role switches to CLIENT, change view default
+    if (currentRole === Role.CLIENT) {
+        setIsCoreAccount(false);
+        setProjectDetailView('client-portal');
+    } else {
+        setProjectDetailView('workflow');
+    }
+  }, [currentRole]);
+
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
@@ -185,7 +207,11 @@ const App: React.FC = () => {
       const targetProject = allProjects.find(p => p.id === notification.projectId);
       if (targetProject) {
         setSelectedProject(targetProject);
-        setProjectDetailView('workflow'); 
+        if (currentRole === Role.CLIENT) {
+            setProjectDetailView('client-portal');
+        } else {
+            setProjectDetailView('workflow');
+        }
         setCurrentView('project-detail');
       }
     }
@@ -233,7 +259,11 @@ const App: React.FC = () => {
     setCurrentView(view);
     if (view !== 'project-detail' && view !== 'public-project') {
       setSelectedProject(null);
-      setProjectDetailView('workflow');
+      if (currentRole === Role.CLIENT) {
+          setProjectDetailView('client-portal');
+      } else {
+          setProjectDetailView('workflow');
+      }
     }
   };
 
@@ -246,6 +276,9 @@ const App: React.FC = () => {
   const handleProjectClick = (project: Project) => {
     setSelectedProject(project);
     setCurrentView('project-detail');
+    if (currentRole === Role.CLIENT) {
+        setProjectDetailView('client-portal');
+    }
   };
 
   const handlePublicProjectClick = (project: Project) => {
@@ -362,6 +395,7 @@ const App: React.FC = () => {
         documents: [],
         thumbnailUrl: projectData.thumbnailUrl || `https://picsum.photos/800/600?random=${allProjects.length + 10}`, 
         gallery: projectData.gallery || [], // Initialize gallery
+        history: [], // Initialize history
         team: {
           [currentUser.role]: currentUser.name 
         }
@@ -499,7 +533,7 @@ const App: React.FC = () => {
   );
 
   const renderFinancialDashboard = () => (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-8 animate-in fade-in duration-500 pb-20">
       {/* Subscription Panel */}
       <div className="bg-zinc-50 border border-slate-200 p-6 flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-start gap-4">
@@ -584,52 +618,190 @@ const App: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Cash Flow Chart */}
-        <div className="lg:col-span-2 bg-white p-6 border border-slate-200">
-           <h3 className="text-lg font-bold text-black uppercase tracking-tight mb-6">Cash Flow Analysis</h3>
-           <div className="h-64">
-             <ResponsiveContainer width="100%" height="100%">
-               <BarChart data={[
-                 { month: 'JAN', in: 40000, out: 24000 },
-                 { month: 'FEB', in: 30000, out: 13980 },
-                 { month: 'MAR', in: 20000, out: 58000 },
-                 { month: 'APR', in: 27800, out: 39080 },
-                 { month: 'MAY', in: 18900, out: 4800 },
-                 { month: 'JUN', in: 23900, out: 38000 },
-               ]}>
-                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                 <XAxis dataKey="month" tick={{fontSize: 10}} axisLine={false} tickLine={false} />
-                 <YAxis tick={{fontSize: 10}} axisLine={false} tickLine={false} tickFormatter={(value) => `$${value/1000}k`} />
-                 <Tooltip cursor={{fill: '#f8fafc'}} contentStyle={{ backgroundColor: '#fff', border: '1px solid #000' }} />
-                 <Bar dataKey="in" fill="#16a34a" name="Income" />
-                 <Bar dataKey="out" fill="#0f172a" name="Expense" />
-               </BarChart>
-             </ResponsiveContainer>
-           </div>
-        </div>
-        
-        {/* Project List */}
-        <div className="bg-white p-6 border border-slate-200 h-fit">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-lg font-bold text-black uppercase tracking-tight">Active Projects</h2>
-            <button onClick={() => setCurrentView('projects')} className="text-xs font-bold uppercase text-slate-500 hover:text-black">View All</button>
-          </div>
-          <div className="space-y-4">
-             {visibleProjects.slice(0, 4).map(p => (
-               <div key={p.id} className="flex items-center justify-between border-b border-slate-100 pb-2 last:border-0 cursor-pointer hover:bg-zinc-50 p-2" onClick={() => handleProjectClick(p)}>
-                  <div>
-                    <p className="text-xs font-bold text-black">{p.name}</p>
-                    <p className="text-[10px] text-slate-500 uppercase">{p.location} • {p.type}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xs font-bold text-emerald-600">${(p.budget/1000).toFixed(0)}k</p>
-                    <p className="text-[10px] text-slate-400">Budget</p>
-                  </div>
-               </div>
-             ))}
-          </div>
-        </div>
+      {/* DETAILED PROJECT BREAKDOWN */}
+      <div className="bg-white border border-slate-200 shadow-sm overflow-hidden">
+         <div className="p-4 border-b border-slate-200 bg-zinc-50 flex items-center justify-between">
+            <h3 className="font-bold text-sm uppercase text-black flex items-center gap-2">
+               <PieChart size={16} /> Project Ledgers
+            </h3>
+            <span className="text-xs text-slate-500 font-medium">{visibleProjects.length} Active Accounts</span>
+         </div>
+         
+         <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+               <thead>
+                  <tr className="bg-white border-b border-slate-200 text-[10px] font-bold uppercase text-slate-400 tracking-wider">
+                     <th className="p-4 w-[25%]">Project Name</th>
+                     <th className="p-4 w-[15%] text-right">Budget</th>
+                     <th className="p-4 w-[15%] text-right">Invoiced</th>
+                     <th className="p-4 w-[15%] text-right">Spent (Real)</th>
+                     <th className="p-4 w-[15%] text-right">Margin</th>
+                     <th className="p-4 w-[10%] text-center">Status</th>
+                     <th className="p-4 w-[5%]"></th>
+                  </tr>
+               </thead>
+               <tbody className="divide-y divide-slate-100">
+                  {visibleProjects.map(p => {
+                     const totalSpend = p.stages.reduce((acc, s) => acc + (s.expenses || []).reduce((eAcc, e) => eAcc + e.totalAmount, 0), 0);
+                     const margin = p.financials.totalInvoiced - totalSpend;
+                     const leak = totalSpend - p.financials.totalInvoiced; // Rough logic: Expenses > Invoiced
+                     const backlog = p.financials.totalInvoiced - p.financials.totalCollected;
+                     
+                     const isExpanded = expandedFinProject === p.id;
+
+                     return (
+                        <React.Fragment key={p.id}>
+                           <tr className={`hover:bg-zinc-50 transition-colors ${isExpanded ? 'bg-zinc-50 font-bold' : ''}`}>
+                              <td className="p-4 text-xs text-black">
+                                 {p.name}
+                                 <div className="text-[9px] text-slate-400 mt-0.5">{p.clientName}</div>
+                              </td>
+                              <td className="p-4 text-xs text-right font-mono text-slate-500">${p.budget.toLocaleString()}</td>
+                              <td className="p-4 text-xs text-right font-mono text-emerald-600">${p.financials.totalInvoiced.toLocaleString()}</td>
+                              <td className="p-4 text-xs text-right font-mono text-red-500">${totalSpend.toLocaleString()}</td>
+                              <td className={`p-4 text-xs text-right font-mono ${margin >= 0 ? 'text-black' : 'text-red-600'}`}>
+                                 {margin >= 0 ? '+' : ''}${margin.toLocaleString()}
+                              </td>
+                              <td className="p-4 text-center">
+                                 {backlog > 0 ? (
+                                    <span className="text-[9px] bg-amber-100 text-amber-700 px-2 py-1 rounded-sm uppercase font-bold">Owes Funds</span>
+                                 ) : (
+                                    <span className="text-[9px] bg-zinc-100 text-zinc-500 px-2 py-1 rounded-sm uppercase font-bold">Settled</span>
+                                 )}
+                              </td>
+                              <td className="p-4 text-center">
+                                 <button onClick={() => setExpandedFinProject(isExpanded ? null : p.id)} className="p-1 hover:bg-zinc-200 rounded">
+                                    {isExpanded ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}
+                                 </button>
+                              </td>
+                           </tr>
+                           
+                           {isExpanded && (
+                              <tr>
+                                 <td colSpan={7} className="p-0 bg-zinc-50 border-b border-slate-200">
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 p-8 animate-in slide-in-from-top-2 fade-in duration-300">
+                                       
+                                       {/* LEFT: Phase Breakdown */}
+                                       <div className="bg-white border border-slate-200 shadow-sm">
+                                          <div className="p-4 border-b border-slate-100 bg-white flex justify-between items-center">
+                                             <h4 className="text-xs font-bold uppercase text-slate-600">Phase Economics</h4>
+                                             <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Cost Center Breakdown</span>
+                                          </div>
+                                          <div className="max-h-[300px] overflow-y-auto">
+                                             <table className="w-full text-left">
+                                                <thead className="sticky top-0 bg-zinc-50 text-[9px] font-bold uppercase text-slate-400">
+                                                   <tr>
+                                                      <th className="p-3 pl-4">Stage</th>
+                                                      <th className="p-3 text-right">Materials/Labor (Cost)</th>
+                                                      <th className="p-3 text-center">Status</th>
+                                                   </tr>
+                                                </thead>
+                                                <tbody className="text-xs divide-y divide-slate-50">
+                                                   {p.stages.map(stage => {
+                                                      const stageCost = (stage.expenses || []).reduce((sum, ex) => sum + ex.totalAmount, 0);
+                                                      return (
+                                                         <tr key={stage.id} className="hover:bg-zinc-50">
+                                                            <td className="p-3 pl-4 font-bold text-black">{stage.name}</td>
+                                                            <td className="p-3 text-right font-mono text-slate-600">
+                                                               {stageCost > 0 ? `$${stageCost.toLocaleString()}` : '-'}
+                                                            </td>
+                                                            <td className="p-3 text-center">
+                                                               <span className={`text-[9px] uppercase px-2 py-0.5 rounded-sm ${stage.status === 'completed' ? 'bg-emerald-100 text-emerald-700' : stage.status === 'active' ? 'bg-black text-white' : 'text-slate-300'}`}>
+                                                                  {stage.status}
+                                                               </span>
+                                                            </td>
+                                                         </tr>
+                                                      )
+                                                   })}
+                                                </tbody>
+                                             </table>
+                                          </div>
+                                       </div>
+
+                                       {/* RIGHT: Transaction Log & Health */}
+                                       <div className="flex flex-col gap-6">
+                                          
+                                          {/* Health Metrics */}
+                                          <div className="grid grid-cols-3 gap-4">
+                                             <div className="bg-white border border-slate-200 p-4">
+                                                <p className="text-[9px] font-bold uppercase text-slate-400 mb-1 flex items-center gap-1">
+                                                   <AlertOctagon size={10} className="text-red-500"/> The Leak
+                                                </p>
+                                                <p className="text-lg font-bold text-slate-900" title="Expenses not yet invoiced">
+                                                   ${Math.max(0, totalSpend - p.financials.totalInvoiced).toLocaleString()}
+                                                </p>
+                                                <p className="text-[8px] text-slate-400 mt-1">Uninvoiced Expenses</p>
+                                             </div>
+                                             <div className="bg-white border border-slate-200 p-4">
+                                                <p className="text-[9px] font-bold uppercase text-slate-400 mb-1 flex items-center gap-1">
+                                                   <Clock size={10} className="text-amber-500"/> The Backlog
+                                                </p>
+                                                <p className="text-lg font-bold text-slate-900" title="Invoiced but not collected">
+                                                   ${backlog.toLocaleString()}
+                                                </p>
+                                                <p className="text-[8px] text-slate-400 mt-1">Accounts Receivable</p>
+                                             </div>
+                                             <div className="bg-white border border-slate-200 p-4">
+                                                <p className="text-[9px] font-bold uppercase text-slate-400 mb-1 flex items-center gap-1">
+                                                   <TrendingUp size={10} className="text-emerald-500"/> Net Margin
+                                                </p>
+                                                <p className={`text-lg font-bold ${margin >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                                                   {((margin / (p.financials.totalInvoiced || 1)) * 100).toFixed(1)}%
+                                                </p>
+                                                <p className="text-[8px] text-slate-400 mt-1">Profitability</p>
+                                             </div>
+                                          </div>
+
+                                          {/* Invoices */}
+                                          <div className="bg-white border border-slate-200 flex-1 flex flex-col">
+                                             <div className="p-4 border-b border-slate-100 bg-white flex justify-between items-center">
+                                                <h4 className="text-xs font-bold uppercase text-slate-600">Transaction Ledger</h4>
+                                                <button className="text-[9px] font-bold uppercase text-emerald-600 hover:underline">View All Invoices</button>
+                                             </div>
+                                             <div className="flex-1 overflow-y-auto max-h-[200px] p-0">
+                                                {(p.financials.transactions || []).length > 0 ? (
+                                                   <table className="w-full text-left">
+                                                      <tbody className="text-xs divide-y divide-slate-50">
+                                                         {p.financials.transactions?.map(tx => (
+                                                            <tr key={tx.id} className="hover:bg-zinc-50">
+                                                               <td className="p-3 pl-4">
+                                                                  <div className="font-bold text-black">{tx.description}</div>
+                                                                  <div className="text-[9px] text-slate-400 font-mono">{tx.date}</div>
+                                                               </td>
+                                                               <td className="p-3 text-center">
+                                                                  <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-sm ${tx.type === 'invoice' ? 'bg-blue-50 text-blue-600' : 'bg-emerald-50 text-emerald-600'}`}>
+                                                                     {tx.type}
+                                                                  </span>
+                                                               </td>
+                                                               <td className="p-3 text-right font-mono font-bold">
+                                                                  {tx.type === 'payment' ? '+' : ''}${tx.amount.toLocaleString()}
+                                                               </td>
+                                                               <td className="p-3 pr-4 text-right">
+                                                                  {tx.status === 'paid' && <CheckCircle2 size={12} className="text-emerald-500 ml-auto" />}
+                                                                  {tx.status === 'pending' && <Clock size={12} className="text-amber-500 ml-auto" />}
+                                                               </td>
+                                                            </tr>
+                                                         ))}
+                                                      </tbody>
+                                                   </table>
+                                                ) : (
+                                                   <div className="p-8 text-center text-slate-400 text-xs italic">
+                                                      No transactions recorded.
+                                                   </div>
+                                                )}
+                                             </div>
+                                          </div>
+                                       </div>
+                                    </div>
+                                 </td>
+                              </tr>
+                           )}
+                        </React.Fragment>
+                     );
+                  })}
+               </tbody>
+            </table>
+         </div>
       </div>
     </div>
   );
@@ -781,30 +953,45 @@ const App: React.FC = () => {
           <div className="flex flex-col items-end gap-4">
              {/* View Toggle */}
             <div className="bg-zinc-100 p-1 flex">
-              <button 
-                onClick={() => setProjectDetailView('workflow')}
-                className={`px-4 py-2 text-xs font-bold uppercase transition-all ${projectDetailView === 'workflow' ? 'bg-black text-white shadow-sm' : 'text-slate-500 hover:text-black'}`}
-              >
-                <div className="flex items-center gap-2">
-                  <Layers size={14} /> Workflow
-                </div>
-              </button>
-              <button 
-                onClick={() => setProjectDetailView('hierarchy')}
-                className={`px-4 py-2 text-xs font-bold uppercase transition-all ${projectDetailView === 'hierarchy' ? 'bg-black text-white shadow-sm' : 'text-slate-500 hover:text-black'}`}
-              >
-                <div className="flex items-center gap-2">
-                  <GitBranch size={14} /> Hierarchy
-                </div>
-              </button>
-              <button 
-                onClick={() => setProjectDetailView('files')}
-                className={`px-4 py-2 text-xs font-bold uppercase transition-all ${projectDetailView === 'files' ? 'bg-black text-white shadow-sm' : 'text-slate-500 hover:text-black'}`}
-              >
-                <div className="flex items-center gap-2">
-                  <FolderOpen size={14} /> Files
-                </div>
-              </button>
+              {currentRole !== Role.CLIENT && (
+                <>
+                  <button 
+                    onClick={() => setProjectDetailView('workflow')}
+                    className={`px-4 py-2 text-xs font-bold uppercase transition-all ${projectDetailView === 'workflow' ? 'bg-black text-white shadow-sm' : 'text-slate-500 hover:text-black'}`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Layers size={14} /> Workflow
+                    </div>
+                  </button>
+                  <button 
+                    onClick={() => setProjectDetailView('hierarchy')}
+                    className={`px-4 py-2 text-xs font-bold uppercase transition-all ${projectDetailView === 'hierarchy' ? 'bg-black text-white shadow-sm' : 'text-slate-500 hover:text-black'}`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <GitBranch size={14} /> Hierarchy
+                    </div>
+                  </button>
+                  <button 
+                    onClick={() => setProjectDetailView('files')}
+                    className={`px-4 py-2 text-xs font-bold uppercase transition-all ${projectDetailView === 'files' ? 'bg-black text-white shadow-sm' : 'text-slate-500 hover:text-black'}`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <FolderOpen size={14} /> Files
+                    </div>
+                  </button>
+                </>
+              )}
+              {/* Client Portal Button - Visible to Clients or Core Accounts */}
+              {(isCoreAccount || currentRole === Role.CLIENT) && (
+                  <button 
+                    onClick={() => setProjectDetailView('client-portal')}
+                    className={`px-4 py-2 text-xs font-bold uppercase transition-all ${projectDetailView === 'client-portal' ? 'bg-black text-white shadow-sm' : 'text-slate-500 hover:text-black'}`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <CreditCard size={14} /> {isCoreAccount ? 'Client View' : 'Payments'}
+                    </div>
+                  </button>
+              )}
             </div>
 
             {/* Budget Widget - Only Visible if Privileged */}
@@ -825,9 +1012,17 @@ const App: React.FC = () => {
         {/* Financial Tab (Only for Core/Managers) - Only show in Workflow View */}
         {canViewFinancials && projectDetailView === 'workflow' && (
            <div className="bg-zinc-50 border border-slate-200 p-6">
-              <h3 className="text-sm font-bold text-black uppercase tracking-tight mb-4 flex items-center gap-2">
-                <DollarSignIcon size={16} /> Project Financial Overview
-              </h3>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-sm font-bold text-black uppercase tracking-tight flex items-center gap-2">
+                  <DollarSign size={16} /> Project Financial Overview
+                </h3>
+                <button 
+                  onClick={() => setProjectDetailView('client-portal')}
+                  className="text-xs font-bold uppercase text-emerald-600 hover:underline flex items-center gap-1"
+                >
+                  <Eye size={12} /> Open Client Portal
+                </button>
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                  <div className="bg-white p-4 border border-slate-200">
                     <p className="text-[10px] text-slate-400 uppercase font-bold">Invoiced</p>
@@ -867,6 +1062,12 @@ const App: React.FC = () => {
                 onUpdateStageAccess={handleUpdateStageAccess}
                 onUpdateTeam={handleUpdateProjectTeam}
                 allTeamMembers={teamMembers}
+             />
+          ) : projectDetailView === 'client-portal' ? (
+             <ClientPaymentPortal 
+                project={selectedProject}
+                isCoreAccount={isCoreAccount}
+                onUpdateProject={handleProjectUpdate}
              />
           ) : (
             <ProjectFiles 
@@ -920,69 +1121,57 @@ const App: React.FC = () => {
 
             {/* Quick Links / Project Docs Section */}
             <div className="bg-zinc-50 p-6 border border-slate-200">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-black uppercase tracking-tight">Project Docs</h3>
-                {isCoreAccount && (
-                  <>
-                    <input 
-                      type="file" 
-                      ref={docInputRef} 
-                      className="hidden" 
-                      onChange={handleUploadProjectDoc} 
-                    />
-                    <button 
-                      onClick={() => docInputRef.current?.click()}
-                      disabled={isUploadingDoc}
-                      className="text-xs font-bold uppercase bg-black text-white px-3 py-1 flex items-center gap-2 hover:bg-zinc-800 disabled:opacity-50"
-                    >
-                      {isUploadingDoc ? <Loader2 size={12} className="animate-spin" /> : <Upload size={12} />}
-                      Upload Doc
-                    </button>
-                  </>
-                )}
+              <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-sm font-bold text-black uppercase tracking-tight">Project Documents</h3>
+                  <div className="relative">
+                     <button 
+                        onClick={() => docInputRef.current?.click()}
+                        disabled={isUploadingDoc}
+                        className="text-xs font-bold uppercase hover:underline flex items-center gap-1 disabled:opacity-50"
+                     >
+                        {isUploadingDoc ? <Loader2 size={12} className="animate-spin" /> : <Upload size={12} />} Upload
+                     </button>
+                     <input type="file" ref={docInputRef} className="hidden" onChange={handleUploadProjectDoc} />
+                  </div>
               </div>
               
-              <ul className="space-y-2">
-                {(selectedProject.documents || []).length > 0 ? (
-                  selectedProject.documents.map((doc) => (
-                    <li 
-                      key={doc.id}
-                      onClick={() => setPreviewFile(doc)} 
-                      className="flex items-center justify-between p-3 bg-white border border-slate-200 hover:border-black cursor-pointer transition-colors group"
-                    >
-                        <span className="flex items-center gap-3 text-sm font-bold text-slate-800 truncate flex-1">
-                          {doc.type === 'pdf' ? <FileText size={14} className="text-red-500" /> : 
-                           doc.type === 'document' || doc.title.endsWith('xlsx') ? <FileText size={14} className="text-blue-500" /> :
-                           <LinkIcon size={14} />}
-                          {doc.title}
-                        </span>
-                        
-                        <div className="flex items-center gap-4">
-                            <span className="text-[10px] text-slate-400 uppercase">
-                                {doc.verificationStatus === 'verified' && (
-                                    <span className="flex items-center gap-1 text-emerald-600 font-bold mr-2">
-                                        <CheckCircle2 size={10} /> VERIFIED
-                                    </span>
-                                )}
-                                {doc.type.toUpperCase()} • {(doc.size ? (doc.size / (1024*1024)).toFixed(1) : '0')}MB
-                            </span>
-                            {isCoreAccount && (
+              <div className="space-y-3">
+                 {selectedProject.documents && selectedProject.documents.length > 0 ? (
+                    selectedProject.documents.map(doc => (
+                       <div key={doc.id} className="flex items-center justify-between p-3 bg-white border border-slate-200 group">
+                          <div 
+                             className="flex items-center gap-3 cursor-pointer"
+                             onClick={() => setPreviewFile(doc)}
+                          >
+                             {doc.type === 'pdf' ? <FileText size={16} className="text-red-500" /> : <LinkIcon size={16} className="text-slate-400" />}
+                             <div>
+                                <p className="text-xs font-bold text-black truncate max-w-[150px]">{doc.title}</p>
+                                <p className="text-[9px] text-slate-400 uppercase">{new Date(doc.uploadDate).toLocaleDateString()}</p>
+                             </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                             {doc.verificationStatus === 'verified' && (
+                                <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-1 rounded flex items-center gap-1">
+                                   <CheckCircle2 size={10} /> Verified
+                                </span>
+                             )}
+                             {isCoreAccount && (
                                 <button 
-                                    onClick={(e) => handleDeleteProjectDoc(doc.id, e)}
-                                    className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 p-1 transition-opacity"
+                                   onClick={(e) => handleDeleteProjectDoc(doc.id, e)}
+                                   className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
                                 >
-                                    <Trash2 size={12} />
+                                   <Trash2 size={12} />
                                 </button>
-                            )}
-                        </div>
-                    </li>
-                  ))
-                ) : (
-                  <li className="p-4 text-center text-slate-400 text-xs italic border border-dashed border-slate-200">
-                    No documents uploaded.
-                  </li>
-                )}
-              </ul>
+                             )}
+                          </div>
+                       </div>
+                    ))
+                 ) : (
+                    <div className="text-center py-6 text-slate-400 italic text-xs">
+                       No documents uploaded.
+                    </div>
+                 )}
+              </div>
             </div>
           </div>
         )}
@@ -990,334 +1179,133 @@ const App: React.FC = () => {
     );
   };
 
+  const renderContent = () => {
+    if (currentView === 'dashboard') return renderUserDashboard();
+    if (currentView === 'projects') return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="col-span-full flex justify-between items-center mb-6">
+             <h2 className="text-2xl font-black text-black uppercase tracking-tight">All Projects</h2>
+             {isCoreAccount && (
+                <button 
+                  onClick={handleCreateClick}
+                  className="bg-black text-white px-4 py-2 text-xs font-bold uppercase hover:bg-zinc-800 flex items-center gap-2"
+                >
+                   <Plus size={14} /> New Project
+                </button>
+             )}
+          </div>
+          {visibleProjects.length > 0 ? visibleProjects.map(p => (
+             <ProjectCard 
+                key={p.id} 
+                project={p} 
+                canViewFinancials={canViewFinancials}
+                onClick={handleProjectClick} 
+             />
+          )) : (
+             <div className="col-span-full p-12 text-center text-slate-400 border-2 border-dashed border-slate-200">
+                No projects found.
+             </div>
+          )}
+      </div>
+    );
+    if (currentView === 'payments') return renderFinancialDashboard();
+    if (currentView === 'team') return (
+      <TeamManagement 
+         projects={allProjects}
+         isCoreAccount={isCoreAccount}
+         teamMembers={teamMembers}
+         onAddMember={() => setIsAddMemberOpen(true)}
+         onSimulateJoin={handleSimulateJoin}
+         onUpdateProject={handleProjectUpdate}
+         onUpdateMemberStatus={handleMemberStatusChange}
+      />
+    );
+    if (currentView === 'settings') return (
+      <StudioSettings 
+         projects={allProjects}
+         teamMembers={teamMembers}
+         isCoreAccount={isCoreAccount}
+         onEditProject={handleEditProjectClick}
+         onCreateProject={handleCreateClick}
+         onViewProject={handleProjectClick}
+      />
+    );
+    if (currentView === 'project-detail') return renderProjectDetail();
+    if (currentView === 'public-project' && selectedProject) {
+        return <PublicProjectView project={selectedProject} onBack={() => handleNavigate('dashboard')} />;
+    }
+    return renderUserDashboard();
+  };
+
   if (showLanding) {
     return <LandingPage onEnter={() => setShowLanding(false)} />;
   }
 
-  if (currentView === 'public-project' && selectedProject) {
-    return (
-      <PublicProjectView 
-        project={selectedProject} 
-        onBack={() => {
-          setSelectedProject(null);
-          setCurrentView('settings'); // Return to settings/portfolio view
-        }} 
-      />
-    );
-  }
-
   return (
-    <Layout 
-      currentRole={currentRole}
-      currentUser={currentUser} 
-      isCoreAccount={isCoreAccount}
-      onRoleChange={setCurrentRole}
-      onToggleCoreAccount={() => setIsCoreAccount(!isCoreAccount)}
-      onNavigate={handleNavigate}
-      onSignOut={handleSignOut}
-      onOpenProfile={() => setIsProfileModalOpen(true)}
-      currentView={currentView}
-      notifications={notifications}
-      onMarkAllRead={handleMarkAllRead}
-      onNotificationClick={handleNotificationClick} 
-    >
-      {currentView === 'dashboard' && (
-         isCoreAccount ? renderFinancialDashboard() : renderUserDashboard()
-      )}
-      
-      {currentView === 'project-detail' && renderProjectDetail()}
-      
-      {currentView === 'projects' && (
-        <div className="space-y-6">
-           <div className="bg-white border border-slate-200 p-4 sticky top-0 z-20 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between">
-              <div className="relative w-full md:w-96">
-                 <Search size={16} className="absolute left-3 top-3 text-slate-400" />
-                 <input 
-                   type="text"
-                   placeholder="Search projects..." 
-                   className="w-full pl-10 pr-4 py-2 border border-slate-300 text-sm focus:border-black outline-none bg-zinc-50 focus:bg-white"
-                   value={searchQuery}
-                   onChange={(e) => setSearchQuery(e.target.value)}
-                 />
-                 {searchQuery && (
-                   <button onClick={() => setSearchQuery('')} className="absolute right-3 top-3 text-slate-400 hover:text-black">
-                     <X size={14} />
-                   </button>
-                 )}
-              </div>
-              
-              <div className="flex gap-4 w-full md:w-auto items-center">
-                 <div className="relative">
-                    <select 
-                      className="appearance-none bg-white border border-slate-300 px-4 py-2 pr-8 text-xs font-bold uppercase focus:border-black outline-none cursor-pointer"
-                      value={filterType}
-                      onChange={(e) => setFilterType(e.target.value as ProjectType | 'All')}
-                    >
-                       <option value="All">All Types</option>
-                       <option value="Residential">Residential</option>
-                       <option value="Commercial">Commercial</option>
-                       <option value="Hospitality">Hospitality</option>
-                       <option value="Healthcare">Healthcare</option>
-                       <option value="Institutional">Institutional</option>
-                       <option value="Mixed-Use">Mixed-Use</option>
-                       <option value="Industrial">Industrial</option>
-                    </select>
-                    <Filter size={12} className="absolute right-3 top-3 pointer-events-none text-slate-400" />
-                 </div>
+    <>
+      <Layout 
+        currentRole={currentRole}
+        currentUser={currentUser}
+        isCoreAccount={isCoreAccount}
+        projects={visibleProjects}
+        onRoleChange={(r) => {
+           setCurrentRole(r);
+           // If switching to client, ensure we view client-appropriate things
+           if (r === Role.CLIENT) {
+              setFilterType('All');
+           }
+        }}
+        onToggleCoreAccount={() => setIsCoreAccount(!isCoreAccount)}
+        onNavigate={handleNavigate}
+        onSelectProject={handleProjectClick}
+        onSignOut={handleSignOut}
+        onOpenProfile={() => setIsProfileModalOpen(true)}
+        currentView={currentView}
+        notifications={notifications}
+        onMarkAllRead={handleMarkAllRead}
+        onNotificationClick={handleNotificationClick}
+      >
+        {renderContent()}
+      </Layout>
 
-                 <div className="relative">
-                    <select 
-                      className="appearance-none bg-white border border-slate-300 px-4 py-2 pr-8 text-xs font-bold uppercase focus:border-black outline-none cursor-pointer"
-                      value={filterClassification}
-                      onChange={(e) => setFilterClassification(e.target.value as ProjectClassification | 'All')}
-                    >
-                       <option value="All">All Categories</option>
-                       <option value="Public">Public</option>
-                       <option value="Private">Private</option>
-                       <option value="Semi-Public">Semi-Public</option>
-                    </select>
-                    <Filter size={12} className="absolute right-3 top-3 pointer-events-none text-slate-400" />
-                 </div>
-
-                 {isCoreAccount && (
-                   <button 
-                     onClick={handleCreateClick}
-                     className="bg-black text-white px-4 py-2 text-xs font-bold uppercase hover:bg-zinc-800 transition-colors flex items-center gap-2"
-                   >
-                      <Plus size={14} /> New Project
-                   </button>
-                 )}
-              </div>
-           </div>
-
-           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {visibleProjects.map(project => (
-                  <ProjectCard 
-                      key={project.id} 
-                      project={project} 
-                      canViewFinancials={canViewFinancials}
-                      onClick={handleProjectClick} 
-                  />
-                ))}
-              {visibleProjects.length === 0 && (
-                  <div className="col-span-full text-center py-20 text-slate-400 border-2 border-dashed border-slate-200 bg-zinc-50">
-                    <p className="font-bold uppercase">No projects found</p>
-                    <p className="text-xs mt-1">Try adjusting your search or filters.</p>
-                  </div>
-              )}
-           </div>
-        </div>
-      )}
-      {(currentView === 'team') && (
-         <TeamManagement 
-            projects={visibleProjects} 
-            isCoreAccount={isCoreAccount}
-            teamMembers={teamMembers}
-            onAddMember={() => setIsAddMemberOpen(true)}
-            onSimulateJoin={handleSimulateJoin}
-            onUpdateProject={handleProjectUpdate}
-            onUpdateMemberStatus={handleMemberStatusChange}
-         />
-      )}
-      {(currentView === 'settings') && (
-        <StudioSettings 
-          projects={visibleProjects} 
-          teamMembers={teamMembers} 
-          isCoreAccount={isCoreAccount} 
-          onEditProject={handleEditProjectClick} 
-          onCreateProject={handleCreateClick}
-          onViewProject={handlePublicProjectClick}
-        />
-      )}
-
-      {/* Global Toast Notification */}
-      {toastMessage && (
-        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-black text-white px-6 py-3 rounded-md shadow-2xl z-[100] animate-in fade-in slide-in-from-bottom-4 flex items-center gap-3">
-          <CheckCircle2 size={18} className="text-emerald-500" />
-          <span className="text-sm font-bold">{toastMessage}</span>
-        </div>
-      )}
-
-      {/* MODALS */}
-      
-      <FilePreviewModal 
-        file={previewFile}
-        isOpen={!!previewFile}
-        onClose={() => setPreviewFile(null)}
-      />
-      
+      {/* Modals */}
       <CreateProjectModal 
-        isOpen={isProjectModalOpen}
-        onClose={() => setIsProjectModalOpen(false)}
+        isOpen={isProjectModalOpen} 
+        onClose={() => setIsProjectModalOpen(false)} 
         onSave={handleSaveProject}
         onDelete={handleDeleteProject}
         currentUserRole={currentRole}
         projectToEdit={editingProject}
       />
 
-      {/* Add Project Member Modal (Specific to Project) */}
-      {selectedProject && (
-        <AddProjectMemberModal 
-           isOpen={isProjectTeamModalOpen}
-           onClose={() => setIsProjectTeamModalOpen(false)}
-           onAdd={handleAddToProjectTeam}
-           teamMembers={teamMembers}
-           currentProject={selectedProject}
-        />
-      )}
-
-      {/* Invite Member Modal (Global Studio) */}
-      {isAddMemberOpen && (
-        <div className="fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4">
-           <div className="bg-white max-w-md w-full animate-in fade-in zoom-in duration-200 border-2 border-black p-6 shadow-2xl">
-              <div className="flex justify-between items-center mb-6 border-b border-slate-100 pb-2">
-                 <h3 className="font-bold text-black uppercase flex items-center gap-2">
-                   <Mail size={16} /> Invite Team Member
-                 </h3>
-                 <button onClick={() => setIsAddMemberOpen(false)}><X size={20} className="text-slate-400 hover:text-black" /></button>
-              </div>
-              <div className="space-y-4">
-                 <div>
-                    <label className="text-[10px] font-bold uppercase text-slate-500 mb-1 block">Email Address (Gmail)</label>
-                    <input 
-                      autoFocus
-                      type="email"
-                      className="w-full border border-slate-300 p-2 text-sm focus:border-black outline-none" 
-                      value={newMemberForm.email}
-                      onChange={e => setNewMemberForm({...newMemberForm, email: e.target.value})}
-                      placeholder="e.g. architect@gmail.com"
-                    />
-                 </div>
-                 <div>
-                    <label className="text-[10px] font-bold uppercase text-slate-500 mb-1 block">Assign Role</label>
-                    <select 
-                      className="w-full border border-slate-300 p-2 text-sm focus:border-black outline-none bg-white"
-                      value={newMemberForm.role}
-                      onChange={e => setNewMemberForm({...newMemberForm, role: e.target.value as Role})}
-                    >
-                       {Object.values(Role).map(role => (
-                          <option key={role} value={role}>{role}</option>
-                       ))}
-                    </select>
-                 </div>
-                 <div>
-                    <label className="text-[10px] font-bold uppercase text-slate-500 mb-1 block">Name (Optional)</label>
-                    <input 
-                      className="w-full border border-slate-300 p-2 text-sm focus:border-black outline-none" 
-                      value={newMemberForm.name}
-                      onChange={e => setNewMemberForm({...newMemberForm, name: e.target.value})}
-                      placeholder="Name will be auto-filled upon joining"
-                    />
-                 </div>
-                 
-                 <div className="bg-zinc-50 p-3 border border-slate-200 text-xs text-slate-500">
-                    <p className="mb-1 font-bold">Invitation Process:</p>
-                    <ul className="list-disc pl-4 space-y-1">
-                       <li>User receives an email with a secure join link.</li>
-                       <li>Access is granted to Studio Profile immediately.</li>
-                       <li>Project access must be assigned manually after joining.</li>
-                    </ul>
-                 </div>
-
-                 <button 
-                   onClick={handleAddMember}
-                   disabled={!newMemberForm.email}
-                   className="w-full bg-black text-white py-3 text-sm font-bold uppercase hover:bg-zinc-800 transition-all flex items-center justify-center gap-2 mt-4 disabled:opacity-50"
-                 >
-                   <Send size={16} /> Send Invitation
-                 </button>
-              </div>
-           </div>
-        </div>
-      )}
-
-      {/* Manage Roles Modal */}
-      {isManageRolesOpen && (
-        <div className="fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4">
-           <div className="bg-white max-w-4xl w-full h-[80vh] animate-in fade-in zoom-in duration-200 border-2 border-black p-6 shadow-2xl flex flex-col">
-              <div className="flex justify-between items-center mb-6 border-b border-slate-100 pb-4 flex-shrink-0">
-                 <div>
-                   <h3 className="font-bold text-black uppercase text-xl">Role Permissions Matrix</h3>
-                   <p className="text-xs text-slate-500">Configure what each role can access within the system.</p>
-                 </div>
-                 <button onClick={() => setIsManageRolesOpen(false)}><X size={24} className="text-slate-400 hover:text-black" /></button>
-              </div>
-              
-              <div className="flex-1 overflow-auto">
-                 <table className="w-full text-left border-collapse">
-                    <thead className="sticky top-0 bg-white z-10 shadow-sm">
-                       <tr className="bg-zinc-50 border-b border-black">
-                          <th className="p-3 text-[10px] font-bold uppercase text-slate-500 w-1/3">Role</th>
-                          <th className="p-3 text-[10px] font-bold uppercase text-slate-500 text-center">Edit Tasks</th>
-                          <th className="p-3 text-[10px] font-bold uppercase text-slate-500 text-center">Upload Files</th>
-                          <th className="p-3 text-[10px] font-bold uppercase text-slate-500 text-center">View Financials</th>
-                          <th className="p-3 text-[10px] font-bold uppercase text-slate-500 text-center">Manage Team</th>
-                       </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                       {Object.values(Role).map(role => {
-                          const perms = rolePermissions[role] || { canEdit: false, canUpload: false, canViewFinancials: false, canManageTeam: false };
-                          return (
-                             <tr key={role} className="hover:bg-zinc-50">
-                                <td className="p-3 font-bold text-xs">{role}</td>
-                                <td className="p-3 text-center">
-                                   <input 
-                                     type="checkbox" 
-                                     checked={perms.canEdit}
-                                     onChange={() => handleUpdatePermission(role, 'canEdit')}
-                                     className="w-4 h-4 accent-black"
-                                   />
-                                </td>
-                                <td className="p-3 text-center">
-                                   <input 
-                                     type="checkbox" 
-                                     checked={perms.canUpload}
-                                     onChange={() => handleUpdatePermission(role, 'canUpload')}
-                                     className="w-4 h-4 accent-black"
-                                   />
-                                </td>
-                                <td className="p-3 text-center">
-                                   <input 
-                                     type="checkbox" 
-                                     checked={perms.canViewFinancials}
-                                     onChange={() => handleUpdatePermission(role, 'canViewFinancials')}
-                                     className="w-4 h-4 accent-black"
-                                   />
-                                </td>
-                                <td className="p-3 text-center">
-                                   <input 
-                                     type="checkbox" 
-                                     checked={perms.canManageTeam}
-                                     onChange={() => handleUpdatePermission(role, 'canManageTeam')}
-                                     className="w-4 h-4 accent-black"
-                                   />
-                                </td>
-                             </tr>
-                          );
-                       })}
-                    </tbody>
-                 </table>
-              </div>
-              <div className="pt-4 border-t border-slate-200 mt-4 flex justify-end">
-                  <button 
-                    onClick={() => setIsManageRolesOpen(false)}
-                    className="bg-black text-white px-6 py-2 font-bold uppercase text-xs hover:bg-zinc-800"
-                  >
-                    Done
-                  </button>
-              </div>
-           </div>
-        </div>
-      )}
-
-      <UserProfileModal 
-        currentUser={currentUser}
-        isOpen={isProfileModalOpen}
-        onClose={() => setIsProfileModalOpen(false)}
-        onSave={handleUpdateProfile}
+      <AddProjectMemberModal 
+         isOpen={isProjectTeamModalOpen}
+         onClose={() => setIsProjectTeamModalOpen(false)}
+         onAdd={handleAddToProjectTeam}
+         teamMembers={teamMembers}
+         currentProject={selectedProject || MOCK_PROJECTS[0]}
       />
 
-    </Layout>
+      <UserProfileModal 
+         isOpen={isProfileModalOpen}
+         onClose={() => setIsProfileModalOpen(false)}
+         currentUser={currentUser}
+         onSave={handleUpdateProfile}
+      />
+      
+      <FilePreviewModal 
+        file={previewFile}
+        isOpen={!!previewFile}
+        onClose={() => setPreviewFile(null)}
+      />
+
+      {/* Toast */}
+      {toastMessage && (
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-black text-white px-6 py-3 rounded shadow-xl z-[100] animate-in slide-in-from-bottom-4 fade-in">
+           <p className="text-xs font-bold uppercase">{toastMessage}</p>
+        </div>
+      )}
+    </>
   );
 };
 

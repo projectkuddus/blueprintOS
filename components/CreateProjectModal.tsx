@@ -27,13 +27,13 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
     clientName: '',
     clientPointOfContact: '',
     clientEmail: '',
-    type: 'Residential' as ProjectType,
-    classification: 'Private' as ProjectClassification,
+    type: 'Residential',
+    classification: 'Private',
     budget: '',
     squareFootage: '',
     description: '',
     thumbnailUrl: '',
-    gallery: [] as string[]
+    gallery: []
   });
 
   const [isUploadingImage, setIsUploadingImage] = useState(false);
@@ -106,7 +106,7 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
 
       setIsUploadingGallery(true);
       try {
-        const uploadPromises = Array.from(files).map(file => simulateCloudUpload(file));
+        const uploadPromises = Array.from(files).map((file) => simulateCloudUpload(file as File));
         const urls = await Promise.all(uploadPromises);
         setFormData(prev => ({ ...prev, gallery: [...prev.gallery, ...urls] }));
       } catch (error) {
@@ -236,7 +236,7 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                             <select 
                               className="w-full border border-slate-300 p-2 text-sm focus:border-black outline-none bg-white"
                               value={formData.type}
-                              onChange={e => setFormData({...formData, type: e.target.value as ProjectType})}
+                              onChange={e => setFormData({...formData, type: e.target.value})}
                             >
                                {DEFAULT_PROJECT_TYPES.map(t => (
                                  <option key={t} value={t}>{t}</option>
@@ -248,7 +248,7 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                             <select 
                               className="w-full border border-slate-300 p-2 text-sm focus:border-black outline-none bg-white"
                               value={formData.classification}
-                              onChange={e => setFormData({...formData, classification: e.target.value as ProjectClassification})}
+                              onChange={e => setFormData({...formData, classification: e.target.value})}
                             >
                                {DEFAULT_CLASSIFICATIONS.map(c => (
                                  <option key={c} value={c}>{c}</option>

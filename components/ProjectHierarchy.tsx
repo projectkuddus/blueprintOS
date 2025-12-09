@@ -14,6 +14,58 @@ interface ProjectHierarchyProps {
   allTeamMembers?: TeamMember[];
 }
 
+interface NodeCardProps {
+  name: string;
+  role: string;
+  type: 'core' | 'exec' | 'ext';
+  isSelected: boolean;
+  isMatch: boolean;
+  isCoreAccount: boolean;
+  onSelect: () => void;
+  onRemove?: (e: React.MouseEvent) => void;
+}
+
+const NodeCard: React.FC<NodeCardProps> = ({ 
+  name, role, type, isSelected, isMatch, isCoreAccount, onSelect, onRemove 
+}) => {
+  return (
+    <div 
+      onClick={onSelect}
+      className={`
+        relative w-56 p-4 border-2 transition-all cursor-pointer group shadow-sm flex items-center gap-3
+        ${isSelected ? 'border-black bg-black text-white z-10 scale-105 shadow-xl' : 'border-slate-200 bg-white hover:border-black hover:shadow-md'}
+        ${!isMatch ? 'opacity-30 blur-[1px]' : 'opacity-100'}
+      `}
+    >
+      <div className={`
+        w-10 h-10 flex-shrink-0 rounded-full flex items-center justify-center border-2 
+        ${isSelected ? 'border-white bg-white text-black' : 'border-black bg-black text-white'}
+      `}>
+        {type === 'core' && <Crown size={16} />}
+        {type === 'exec' && <HardHat size={16} />}
+        {type === 'ext' && <User size={16} />}
+      </div>
+      <div className="min-w-0">
+         <p className="font-bold text-xs truncate w-full">{name}</p>
+         <p className={`text-[9px] uppercase font-bold tracking-wider truncate w-full ${isSelected ? 'text-zinc-400' : 'text-slate-500'}`}>{role}</p>
+      </div>
+      
+      {/* Access Indicator / Remove */}
+      {isCoreAccount && onRemove && (
+        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+            <button 
+              onClick={onRemove}
+              className={`p-1 rounded-sm transition-colors ${isSelected ? 'text-zinc-400 hover:text-white hover:bg-zinc-800' : 'text-slate-300 hover:text-red-500 hover:bg-red-50'}`}
+              title="Remove User"
+            >
+                <Trash2 size={12} />
+            </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const ProjectHierarchy: React.FC<ProjectHierarchyProps> = ({ project, isCoreAccount, onUpdateStageAccess, onUpdateTeam, allTeamMembers }) => {
   const [selectedUser, setSelectedUser] = useState<{name: string, role: string} | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -107,51 +159,6 @@ const ProjectHierarchy: React.FC<ProjectHierarchyProps> = ({ project, isCoreAcco
       }
   };
 
-  // Node Component
-  const NodeCard = ({ name, role, type }: { name: string, role: string, type: 'core' | 'exec' | 'ext' }) => {
-    const isSelected = selectedUser?.name === name;
-    const isMatch = searchQuery ? name.toLowerCase().includes(searchQuery.toLowerCase()) || role.toLowerCase().includes(searchQuery.toLowerCase()) : true;
-    
-    return (
-      <div 
-        onClick={() => setSelectedUser({ name, role })}
-        className={`
-          relative w-56 p-4 border-2 transition-all cursor-pointer group shadow-sm flex items-center gap-3
-          ${isSelected ? 'border-black bg-black text-white z-10 scale-105 shadow-xl' : 'border-slate-200 bg-white hover:border-black hover:shadow-md'}
-          ${!isMatch ? 'opacity-30 blur-[1px]' : 'opacity-100'}
-        `}
-      >
-        <div className={`
-          w-10 h-10 flex-shrink-0 rounded-full flex items-center justify-center border-2 
-          ${isSelected ? 'border-white bg-white text-black' : 'border-black bg-black text-white'}
-        `}>
-          {type === 'core' && <Crown size={16} />}
-          {type === 'exec' && <HardHat size={16} />}
-          {type === 'ext' && <User size={16} />}
-        </div>
-        <div className="min-w-0">
-           <p className="font-bold text-xs truncate w-full">{name}</p>
-           <p className={`text-[9px] uppercase font-bold tracking-wider truncate w-full ${isSelected ? 'text-zinc-400' : 'text-slate-500'}`}>{role}</p>
-        </div>
-        
-        {/* Access Indicator / Remove */}
-        {isCoreAccount && (
-          <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
-            {onUpdateTeam && (
-                <button 
-                  onClick={(e) => handleRemoveMember(role as Role, e)}
-                  className={`p-1 rounded-sm transition-colors ${isSelected ? 'text-zinc-400 hover:text-white hover:bg-zinc-800' : 'text-slate-300 hover:text-red-500 hover:bg-red-50'}`}
-                  title="Remove User"
-                >
-                    <Trash2 size={12} />
-                </button>
-            )}
-          </div>
-        )}
-      </div>
-    );
-  };
-
   const availableRoles = Object.values(Role).filter(r => !project.team[r]);
 
   return (
@@ -226,7 +233,16 @@ const ProjectHierarchy: React.FC<ProjectHierarchyProps> = ({ project, isCoreAcco
                     {management.map((p, i) => (
                         <div key={i} className="relative flex flex-col items-center">
                             <div className="w-0.5 h-8 bg-black absolute -top-8"></div>
-                            <NodeCard name={p.name!} role={p.role} type="core" />
+                            <NodeCard 
+                              name={p.name!} 
+                              role={p.role} 
+                              type="core" 
+                              isSelected={selectedUser?.name === p.name!}
+                              isMatch={searchQuery ? (p.name!.toLowerCase().includes(searchQuery.toLowerCase()) || p.role.toLowerCase().includes(searchQuery.toLowerCase())) : true}
+                              isCoreAccount={isCoreAccount}
+                              onSelect={() => setSelectedUser({ name: p.name!, role: p.role })}
+                              onRemove={onUpdateTeam ? (e) => handleRemoveMember(p.role as Role, e) : undefined}
+                            />
                             
                             {/* Down Connector */}
                             <div className="w-0.5 h-12 bg-black absolute -bottom-12"></div>
@@ -253,7 +269,17 @@ const ProjectHierarchy: React.FC<ProjectHierarchyProps> = ({ project, isCoreAcco
                             <div className="grid grid-cols-2 gap-x-8 gap-y-8 relative animate-in fade-in slide-in-from-top-4">
                                 <div className="absolute left-1/2 top-0 bottom-0 w-px border-l-2 border-dashed border-slate-200 -z-10"></div>
                                 {execution.map((p, i) => (
-                                    <NodeCard key={i} name={p.name!} role={p.role} type="exec" />
+                                    <NodeCard 
+                                      key={i} 
+                                      name={p.name!} 
+                                      role={p.role} 
+                                      type="exec" 
+                                      isSelected={selectedUser?.name === p.name!}
+                                      isMatch={searchQuery ? (p.name!.toLowerCase().includes(searchQuery.toLowerCase()) || p.role.toLowerCase().includes(searchQuery.toLowerCase())) : true}
+                                      isCoreAccount={isCoreAccount}
+                                      onSelect={() => setSelectedUser({ name: p.name!, role: p.role })}
+                                      onRemove={onUpdateTeam ? (e) => handleRemoveMember(p.role as Role, e) : undefined}
+                                    />
                                 ))}
                             </div>
                         )}
@@ -276,7 +302,17 @@ const ProjectHierarchy: React.FC<ProjectHierarchyProps> = ({ project, isCoreAcco
                             <div className="grid grid-cols-2 gap-x-8 gap-y-8 relative animate-in fade-in slide-in-from-top-4">
                                 <div className="absolute left-1/2 top-0 bottom-0 w-px border-l-2 border-dashed border-slate-200 -z-10"></div>
                                 {external.map((p, i) => (
-                                    <NodeCard key={i} name={p.name!} role={p.role} type="ext" />
+                                    <NodeCard 
+                                      key={i} 
+                                      name={p.name!} 
+                                      role={p.role} 
+                                      type="ext" 
+                                      isSelected={selectedUser?.name === p.name!}
+                                      isMatch={searchQuery ? (p.name!.toLowerCase().includes(searchQuery.toLowerCase()) || p.role.toLowerCase().includes(searchQuery.toLowerCase())) : true}
+                                      isCoreAccount={isCoreAccount}
+                                      onSelect={() => setSelectedUser({ name: p.name!, role: p.role })}
+                                      onRemove={onUpdateTeam ? (e) => handleRemoveMember(p.role as Role, e) : undefined}
+                                    />
                                 ))}
                             </div>
                         )}

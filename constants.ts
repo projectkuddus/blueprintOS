@@ -1,5 +1,5 @@
 
-import { Project, Role, Stage, TeamMember, StudioProfile, RolePermissions } from './types';
+import { Project, Role, Stage, TeamMember, StudioProfile, RolePermissions, ExpenseItem } from './types';
 
 // Centralized Permission Logic - Simulates Core Account Configuration
 export const ROLE_PERMISSIONS: Record<Role, RolePermissions> = {
@@ -73,19 +73,20 @@ export const generateStandardStages = (currentActiveId: string): Stage[] => {
 
     // Mock content for specific stages
     const assets = [];
+    const expenses: ExpenseItem[] = [];
+
     if (status === 'completed' || status === 'active') {
         if (name.includes('Ideation')) {
-            assets.push({ id: `a-${index}-1`, title: 'Moodboard v1', type: 'image', url: 'https://picsum.photos/400/300?random=10', uploadedBy: 'Sadia Rahman', uploadDate: '2023-11-20', size: 5242880 }); // 5MB
-            assets.push({ id: `a-${index}-2`, title: 'Initial Sketches', type: 'pdf', url: '#', uploadedBy: 'Sadia Rahman', uploadDate: '2023-11-22', size: 12582912 }); // 12MB
+            assets.push({ id: `a-${index}-1`, title: 'Moodboard v1', type: 'image', url: 'https://picsum.photos/400/300?random=10', uploadedBy: 'Sadia Rahman', uploadDate: '2023-11-20', size: 5242880 }); 
+            expenses.push({ id: `ex-${index}-1`, description: 'Design Consultation Fee', category: 'Service', totalAmount: 50000, date: '2023-11-20', status: 'invoiced' });
         }
-        if (name.includes('CAD')) {
-            assets.push({ id: `a-${index}-3`, title: 'Floor Plan L1', type: 'cad', url: '#', uploadedBy: 'Sadia Rahman', uploadDate: '2024-01-15', size: 45000000 }); // 45MB
+        if (name.includes('Construction: Foundation')) {
+             expenses.push({ id: `ex-${index}-2`, description: 'Cement (50 Bags)', category: 'Material', quantity: 50, unit: 'bags', unitPrice: 550, totalAmount: 27500, date: '2024-03-01', status: 'purchased', vendor: 'Seven Rings Cement' });
+             expenses.push({ id: `ex-${index}-3`, description: 'Rebar (1 Ton)', category: 'Material', quantity: 1, unit: 'ton', unitPrice: 95000, totalAmount: 95000, date: '2024-03-05', status: 'purchased', vendor: 'BSRM' });
+             expenses.push({ id: `ex-${index}-4`, description: 'Labor Payment (Week 1)', category: 'Labor', totalAmount: 15000, date: '2024-03-07', status: 'estimated' });
         }
-        if (name.includes('3D')) {
-             assets.push({ id: `a-${index}-4`, title: 'Exterior Render', type: '3d', url: 'https://picsum.photos/400/300?random=11', uploadedBy: 'Visual Team', uploadDate: '2024-02-01', size: 250000000 }); // 250MB
-        }
-        if (name.includes('Construction')) {
-             assets.push({ id: `a-${index}-5`, title: 'Site Inspection', type: 'image', url: 'https://picsum.photos/400/300?random=12', uploadedBy: 'Marcus Johnson', uploadDate: '2024-03-10', size: 8500000 }); // 8.5MB
+        if (name.includes('Finishing')) {
+             expenses.push({ id: `ex-${index}-5`, description: 'Italian Marble Samples', category: 'Material', totalAmount: 5000, date: '2024-04-10', status: 'estimated' });
         }
     }
 
@@ -115,7 +116,8 @@ export const generateStandardStages = (currentActiveId: string): Stage[] => {
       discussions: [
           { id: `c-${index}`, author: 'Sadia Rahman', role: Role.ARCHITECT_HEAD, text: `Starting work on ${name}.`, timestamp: Date.now() - 10000000 }
       ],
-      startDate: '2024-01-01'
+      startDate: '2024-01-01',
+      expenses
     } as Stage;
   });
 };
@@ -137,10 +139,10 @@ export const MOCK_PROJECTS: Project[] = [
       totalExpenses: 8500000,
       pendingBills: 2000000,
       transactions: [
-        { id: 'tx1', date: '2023-10-01', description: 'Initial Mobilization', amount: 5000000, type: 'invoice', status: 'paid' },
-        { id: 'tx2', date: '2023-10-05', description: 'Payment Received', amount: 5000000, type: 'payment', status: 'paid', reference: 'CHK-992' },
-        { id: 'tx3', date: '2024-01-15', description: 'Foundation Completion', amount: 7000000, type: 'invoice', status: 'paid' },
-        { id: 'tx4', date: '2024-02-01', description: 'Partial Payment', amount: 5000000, type: 'payment', status: 'paid', reference: 'TRF-123' },
+        { id: 'tx1', date: '2023-10-01', description: 'Initial Mobilization', amount: 5000000, type: 'invoice', status: 'paid', stageId: 'client-onboarding' },
+        { id: 'tx2', date: '2023-10-05', description: 'Payment Received', amount: 5000000, type: 'payment', status: 'paid', reference: 'CHK-992', stageId: 'client-onboarding' },
+        { id: 'tx3', date: '2024-01-15', description: 'Foundation Completion', amount: 7000000, type: 'invoice', status: 'paid', stageId: 'construction-foundation' },
+        { id: 'tx4', date: '2024-02-01', description: 'Partial Payment', amount: 5000000, type: 'payment', status: 'paid', reference: 'TRF-123', stageId: 'construction-foundation' },
       ]
     },
     currentStageId: 'construction-structure',
@@ -151,6 +153,11 @@ export const MOCK_PROJECTS: Project[] = [
       { id: 'd3', title: 'Signed Agreement', type: 'pdf', url: '#', uploadedBy: 'Jamal Ahmed', uploadDate: '2023-10-25', size: 1200000, verificationStatus: 'verified' }
     ],
     thumbnailUrl: 'https://picsum.photos/800/600?random=1',
+    gallery: [],
+    history: [
+       { id: 'h1', user: 'Sadia Rahman', action: 'Created Project', timestamp: Date.now() - 100000000 },
+       { id: 'h2', user: 'Sadia Rahman', action: 'Uploaded BOQ', timestamp: Date.now() - 90000000 },
+    ],
     team: {
       [Role.ARCHITECT_HEAD]: 'Sadia Rahman',
       [Role.ARCHITECT_JUNIOR]: 'Emily Davis',
@@ -178,14 +185,16 @@ export const MOCK_PROJECTS: Project[] = [
       totalExpenses: 500000,
       pendingBills: 500000,
       transactions: [
-        { id: 'tx5', date: '2024-03-01', description: 'Design Consultation Fee', amount: 1500000, type: 'invoice', status: 'pending' },
-        { id: 'tx6', date: '2024-03-10', description: 'Advance Payment', amount: 1000000, type: 'payment', status: 'paid' },
+        { id: 'tx5', date: '2024-03-01', description: 'Design Consultation Fee', amount: 1500000, type: 'invoice', status: 'pending', stageId: 'ideation-concept' },
+        { id: 'tx6', date: '2024-03-10', description: 'Advance Payment', amount: 1000000, type: 'payment', status: 'paid', stageId: 'ideation-concept' },
       ]
     },
     currentStageId: 'ideation-concept',
     stages: generateStandardStages('ideation-concept'),
     documents: [],
     thumbnailUrl: 'https://picsum.photos/800/600?random=2',
+    gallery: [],
+    history: [],
     team: {
       [Role.ARCHITECT_HEAD]: 'Sadia Rahman',
       [Role.ARCHITECT_SENIOR]: 'James Wilson',
@@ -210,14 +219,16 @@ export const MOCK_PROJECTS: Project[] = [
       totalExpenses: 2800000,
       pendingBills: 0,
       transactions: [
-        { id: 'tx7', date: '2024-01-01', description: 'Full Project Fee', amount: 4000000, type: 'invoice', status: 'paid' },
-        { id: 'tx8', date: '2024-01-02', description: 'Full Payment', amount: 4000000, type: 'payment', status: 'paid' },
+        { id: 'tx7', date: '2024-01-01', description: 'Full Project Fee', amount: 4000000, type: 'invoice', status: 'paid', stageId: 'handover' },
+        { id: 'tx8', date: '2024-01-02', description: 'Full Payment', amount: 4000000, type: 'payment', status: 'paid', stageId: 'handover' },
       ]
     },
     currentStageId: 'handover',
     stages: generateStandardStages('handover'),
     documents: [],
     thumbnailUrl: 'https://picsum.photos/800/600?random=3',
+    gallery: [],
+    history: [],
     team: {
       [Role.ARCHITECT_HEAD]: 'Sadia Rahman',
       [Role.PHOTOGRAPHER]: 'LensCraft Studios',
@@ -225,62 +236,6 @@ export const MOCK_PROJECTS: Project[] = [
       [Role.AWARD_SUBMISSION]: 'Sadia Rahman'
     }
   },
-  {
-    id: '4',
-    name: 'Central City Hospital Wing',
-    location: 'Chittagong',
-    clientName: 'HealthFirst Systems',
-    clientPointOfContact: 'Dr. Zafar',
-    type: 'Healthcare',
-    classification: 'Public',
-    squareFootage: 45000,
-    budget: 120000000,
-    financials: {
-      totalInvoiced: 20000000,
-      totalCollected: 18000000,
-      totalExpenses: 15000000,
-      pendingBills: 2000000,
-      transactions: []
-    },
-    currentStageId: 'functional-flow',
-    stages: generateStandardStages('functional-flow'),
-    documents: [],
-    thumbnailUrl: 'https://picsum.photos/800/600?random=4',
-    team: {
-      [Role.ARCHITECT_HEAD]: 'Sadia Rahman',
-      [Role.PROJECT_MANAGER]: 'Kenji Sato',
-      [Role.ENGINEER_MAIN]: 'Tanvir Hasan',
-      [Role.ACCOUNT_MANAGER]: 'Amanda Lewis',
-      [Role.CONSTRUCTION_MANAGER]: 'Bill Gates (Simulated)'
-    }
-  },
-  {
-    id: '5',
-    name: 'Grand Horizon Hotel',
-    location: 'Cox\'s Bazar',
-    clientName: 'Horizon Group',
-    clientPointOfContact: 'Director of Ops',
-    type: 'Hospitality',
-    classification: 'Semi-Public',
-    squareFootage: 85000,
-    budget: 350000000,
-    financials: {
-      totalInvoiced: 5000000,
-      totalCollected: 5000000,
-      totalExpenses: 1000000,
-      pendingBills: 0,
-      transactions: []
-    },
-    currentStageId: 'client-onboarding',
-    stages: generateStandardStages('client-onboarding'),
-    documents: [],
-    thumbnailUrl: 'https://picsum.photos/800/600?random=5',
-    team: {
-      [Role.ARCHITECT_HEAD]: 'Sadia Rahman',
-      [Role.MARKETING]: 'Creative Agency X',
-      [Role.DEVELOPER]: 'Horizon Dev Team'
-    }
-  }
 ];
 
 export const MOCK_TEAM_MEMBERS: TeamMember[] = [

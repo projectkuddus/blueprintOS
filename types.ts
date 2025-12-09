@@ -1,5 +1,4 @@
 
-
 export enum Role {
   // Core / Design Team
   ARCHITECT_HEAD = 'Principal Architect',
@@ -75,6 +74,20 @@ export interface Task {
   dependencies?: string[]; // IDs of prerequisite tasks
 }
 
+export interface ExpenseItem {
+  id: string;
+  description: string;
+  category: 'Material' | 'Labor' | 'Service' | 'Permit' | 'Overhead';
+  vendor?: string;
+  quantity?: number;
+  unit?: string;
+  unitPrice?: number;
+  totalAmount: number;
+  date: string;
+  status: 'estimated' | 'purchased' | 'invoiced';
+  invoiceId?: string; // Link to generated invoice
+}
+
 export interface Stage {
   id: string;
   name: string;
@@ -86,6 +99,7 @@ export interface Stage {
   participants?: string[]; // List of names who have access/tasks in this stage
   startDate?: string;
   endDate?: string;
+  expenses: ExpenseItem[]; // NEW: Granular financial tracking per phase
 }
 
 export interface Transaction {
@@ -96,6 +110,8 @@ export interface Transaction {
   type: 'invoice' | 'payment' | 'expense';
   status: 'pending' | 'paid' | 'overdue';
   reference?: string; // Invoice # or Check #
+  items?: ExpenseItem[]; // Linked items for auto-invoicing
+  stageId?: string; // Link transaction to a specific project phase
 }
 
 export interface ProjectFinancials {
@@ -126,6 +142,15 @@ export interface Project {
   thumbnailUrl: string;
   gallery?: string[]; // Additional project photos (Max 10)
   team: Partial<Record<Role, string>>;
+  history: ProjectActivity[];
+}
+
+export interface ProjectActivity {
+  id: string;
+  user: string;
+  action: string;
+  target?: string;
+  timestamp: number;
 }
 
 export interface ChatMessage {

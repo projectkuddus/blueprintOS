@@ -1,0 +1,8 @@
+{
+  "name": "BlueprintOS",
+  "description": "A comprehensive project management platform for architects to track projects from onboarding to handover, facilitating collaboration between architects, clients, engineers, and contractors.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
